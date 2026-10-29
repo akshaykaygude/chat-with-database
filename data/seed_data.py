@@ -21,7 +21,8 @@ load_dotenv()
 def get_connection_url(fallback_sqlite=False):
     """Builds database connection URL from environment variables."""
     if fallback_sqlite:
-        return "sqlite:///data/manufacturing_db.db"
+        db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "manufacturing_db.db"))
+        return f"sqlite:///{db_path}"
     
     db_url = os.getenv("DATABASE_URL")
     if db_url:
