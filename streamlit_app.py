@@ -186,6 +186,9 @@ def render_line_chart(df: pd.DataFrame, x_col: str, num_cols: list):
     except Exception:
         st.line_chart(df.set_index(x_col)[num_cols])
 
+def cat_col_label(col: str) -> str:
+    return str(col).replace("_", " ").title()
+
 def render_smart_dashboard(df: pd.DataFrame):
     if df is None or df.empty:
         st.info("No records to visualize. Execute a query or select a table from the explorer.")
@@ -264,9 +267,6 @@ def render_smart_dashboard(df: pd.DataFrame):
             mime="text/csv",
             key=f"dl_csv_btn_{len(df)}"
         )
-
-def cat_col_label(col: str) -> str:
-    return str(col).replace("_", " ").title()
 
 
 # ==============================================================================
