@@ -1,39 +1,81 @@
-# 💬 Chat with Database
+# 💬 Chat with Database (Schema-Aware Text-to-SQL Copilot)
 
 > **An AI-Powered Database Assistant & Smart Visual Analytics Dashboard**  
-> *Translates natural language questions into safe SQL queries, visualizes results with auto-charts, and gives ChatGPT-style analytical advice using Schema-Aware RAG and Hugging Face LLMs.*
+> *Translates natural language questions into safe SQL queries, visualizes results with auto-charts, and provides ChatGPT-style analytical advice using Schema-Aware RAG and Hugging Face LLMs.*
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.35%2B-FF4B4B.svg)](https://streamlit.io/)
+[![CI Pipeline](https://github.com/akshaykaygude/chat-with-database/actions/workflows/ci.yml/badge.svg)](https://github.com/akshaykaygude/chat-with-database/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.35%2B-FF4B4B.svg?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![HuggingFace](https://img.shields.io/badge/HuggingFace-Inference%20API-yellow.svg)](https://huggingface.co/)
 [![ChromaDB](https://img.shields.io/badge/Vector%20Store-ChromaDB-purple.svg)](https://www.trychroma.com/)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%20%7C%20SQLite-336791.svg)](https://www.postgresql.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
-## 🌟 Key Features
+## 🎯 Current Capabilities: What Already Works
 
-- 🤖 **ChatGPT-Style Copilot**: Ask freeform business questions or ask for visualization advice (e.g., *"Which columns should I use for a pie chart?"*).
-- 🔍 **Schema-Aware RAG**: Intelligently retrieves only the relevant tables and foreign key relationships into the prompt using **ChromaDB** and local **Hugging Face Sentence-Transformers**.
-- 📊 **Smart Auto-Dashboard**: Automatically detects data types and renders the ideal visual:
-  - 🥧 **Pie / Donut Charts** for categorical splits (2–8 slices)
-  - 📊 **Grouped / Multi-bar Charts** for comparisons
-  - 📈 **Line Charts** for time-series trends
-  - ⚡ **KPI Cards** for single metric summaries
-  - 📋 **Interactive Data Tables** with one-click CSV export
-- 🛡️ **Built-in Guardrails**: Strictly validates SQL before execution, blocking destructive commands (`DROP`, `DELETE`, `UPDATE`, `ALTER`, `TRUNCATE`).
-- 📤 **CSV Uploader & Auto-Indexer**: Upload any spreadsheet to import it into the database and immediately query it with AI.
-- ⚡ **Zero-Configuration Mode**: Automatically connects to local PostgreSQL if available, or falls back to an included SQLite database so anyone can test **instantly with zero database setup required**!
+The following components are fully implemented and verified in this codebase:
+
+- [x] **ChatGPT-Style Copilot (`src/generator.py`)**:
+  - Answers open-ended conversational questions and provides charting advice (e.g., *"Which columns should I use for a pie chart?"*).
+  - Translates operational queries into optimized PostgreSQL/SQLite SELECT queries using `Qwen/Qwen2.5-Coder-32B-Instruct`.
+- [x] **Schema-Aware RAG Retrieval (`src/retriever.py`, `src/indexer.py`)**:
+  - Encodes table definitions, column types, and foreign key relationships into embeddings using local `sentence-transformers/all-MiniLM-L6-v2`.
+  - Performs semantic vector search in ChromaDB to retrieve only the relevant table schemas into the prompt, preventing LLM context window overflow.
+- [x] **Smart Auto-Dashboard (`streamlit_app.py`)**:
+  - Evaluates query result sets and automatically chooses the best visual format:
+    - 🥧 **Pie / Donut Charts** for categorical splits (2–8 slices).
+    - 📊 **Grouped Bar Charts** for comparisons across dimensions.
+    - 📈 **Line Charts** for time-series trends.
+    - ⚡ **KPI Metric Cards** for single aggregated metrics.
+    - 📋 **Interactive Data Tables** with one-click CSV export.
+- [x] **Strict SQL Safety Guardrails (`src/guardrails.py`)**:
+  - Parses SQL statements using `sqlparse`.
+  - Blocks all destructive statements (`DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `TRUNCATE`, `EXEC`) with immediate user warnings.
+- [x] **CSV Uploader & Auto-Indexer (`streamlit_app.py`, `src/database.py`)**:
+  - Allows uploading arbitrary CSV files, creates sanitized tables, and automatically re-indexes schema embeddings.
+- [x] **Dual Database Support (`src/database.py`)**:
+  - Zero-configuration local SQLite fallback (`data/manufacturing_db.db`) allows instant testing without setting up a database server.
+  - Production PostgreSQL connection when configured in `.env`.
+- [x] **Automated Test Suite & CI (`tests/test_sql_rag.py`, `.github/workflows/ci.yml`)**:
+  - Unit tests covering guardrails, schema introspection, query execution, and intent classification running on GitHub Actions.
 
 ---
 
-## 📁 Project Structure
+## ⚠️ Known Limitations & Real-World Edge Cases
+
+1. **Hugging Face Inference Free-Tier Limits**:
+   - The cloud Inference API provides generous free tier access, but high-frequency requests may experience temporary rate-limit cooldowns. Setting a personal `HF_TOKEN` in `.env` raises throughput.
+2. **Deeply Nested Subqueries Across 4+ Tables**:
+   - Schema-aware retrieval retrieves the top-K tables (default: 3). Queries requiring complex joins across 5 or more distant tables may require manual table selection or increasing `top_k`.
+3. **Dialect Differences (PostgreSQL vs. SQLite)**:
+   - While date functions (`strftime` vs `DATE_TRUNC`) are handled by prompt guidelines, advanced PostgreSQL window functions may not execute if falling back to local SQLite.
+
+---
+
+## 🗺️ Development Roadmap & Next Milestones
+
+- [x] **v1.0 (Core Engine)**: Schema vector indexing with ChromaDB and CLI interface.
+- [x] **v1.1 (Interactive UI)**: Split-screen Streamlit application with visual analytics and side-by-side chatbot.
+- [x] **v1.2 (Data Ingestion)**: Dynamic CSV uploader with automated schema vector re-indexing.
+- [x] **v1.3 (Quality & CI)**: Automated unit testing suite and GitHub Actions testing pipeline.
+- [ ] **v2.0 (Local Offline LLM)**: Support for local Ollama / vLLM execution (Qwen-2.5-Coder / Llama 3.1) for zero cloud API dependency.
+- [ ] **v2.1 (Multi-Database Switcher)**: Live UI connection manager for MySQL, Snowflake, and BigQuery.
+
+---
+
+## 📁 Repository Structure
 
 ```text
 chat-with-database/
+├── .github/workflows/
+│   └── ci.yml                 # GitHub Actions automated test pipeline
+├── tests/
+│   └── test_sql_rag.py        # Automated test suite (guardrails, reflection, router)
 ├── data/
 │   ├── seed_data.py           # Populates sample PostgreSQL / SQLite tables
-│   ├── company_mock.db        # Included demo database (for instant zero-setup testing)
+│   ├── company_mock.db        # Included demo database
 │   ├── manufacturing_db.db    # Manufacturing plant & operations dataset
 │   └── chroma_db/             # Local vector store containing table schema embeddings
 ├── src/
@@ -48,14 +90,13 @@ chat-with-database/
 ├── requirements.txt           # Python dependencies
 ├── .env.example               # Configuration template
 ├── .gitignore                 # Excludes secrets, venvs, and logs
+├── LICENSE                    # MIT Open-Source License
 └── README.md                  # Project documentation
 ```
 
 ---
 
 ## 🚀 3-Minute Quickstart
-
-Setting up this project is quick and simple. Follow these steps:
 
 ### 1. Clone the Repository
 ```bash
@@ -80,8 +121,6 @@ pip install -r requirements.txt
 ```
 
 ### 4. Setup Your Environment File (`.env`)
-Copy `.env.example` to create your `.env`:
-
 ```bash
 # Windows
 copy .env.example .env
@@ -90,96 +129,34 @@ copy .env.example .env
 cp .env.example .env
 ```
 
-Open `.env` and fill in your settings:
+Open `.env` and configure your free Hugging Face token:
 ```ini
-# Hugging Face API Token (Get a free read token at https://huggingface.co/settings/tokens)
 HF_TOKEN=your_huggingface_token_here
-
-# (Optional) PostgreSQL settings. If left unchanged, the app automatically runs on local SQLite!
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=company_db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
 ```
-
-> **Note**: If you don't have PostgreSQL installed, **no problem!** The application will automatically use the included SQLite database (`data/manufacturing_db.db`), allowing you to test right away without configuring a database server.
+*(Get a free read token at https://huggingface.co/settings/tokens. Database credentials are optional; local SQLite is used by default!)*
 
 ---
 
 ## 💻 Running the Application
 
 ### Option A: Interactive Web UI (Recommended)
-Launch the Streamlit web dashboard with the side-by-side AI Copilot:
 ```bash
 streamlit run streamlit_app.py
 ```
 Open your browser at `http://localhost:8501`.
 
-### Option B: Terminal / CLI Mode
-If you prefer running queries from the command line:
+### Option B: Terminal CLI Mode
 ```bash
 python app.py
 ```
 
-### Option C: Beginner's 5-Step Learning Script
-To understand how Schema-Aware Text-to-SQL works step-by-step:
+### Option C: Run Test Suite
 ```bash
-python simple_nl2sql.py
+python -m unittest tests/test_sql_rag.py
 ```
-
----
-
-## 💡 Example Questions to Ask
-
-Try typing these questions into the AI Copilot:
-
-### 📈 Charting & Visualization Advice
-- *"Which columns should I use for a pie chart?"*
-- *"What columns are best to plot a bar chart?"*
-- *"Suggest the best visualization for production output over time."*
-
-### 🏭 Manufacturing & Operations Intelligence
-- *"What is our overall average OEE percentage across all runs?"*
-- *"Show total defect quantity grouped by plant location."*
-- *"Which production line experienced the highest downtime?"*
-- *"List all runs where scrap quantity exceeded 20 units."*
-
-### 👥 Employee & Business Analytics
-- *"Show me employee count by department."*
-- *"List all employees in the Engineering department."*
-
----
-
-## 🛡️ Query Safety & Guardrails
-
-To protect against SQL injection or accidental data corruption:
-1. Queries are parsed and inspected with `sqlparse`.
-2. Only read-only `SELECT` statements are permitted.
-3. Any attempt to run `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, or `EXEC` is blocked immediately with a safety alert.
-
----
-
-## 🛠️ Tech Stack
-
-| Component | Technology |
-|---|---|
-| **Frontend UI** | [Streamlit](https://streamlit.io/) + [Plotly](https://plotly.com/python/) |
-| **Vector Store** | [ChromaDB](https://www.trychroma.com/) |
-| **Embeddings** | [Hugging Face Sentence-Transformers](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) (`all-MiniLM-L6-v2`) |
-| **LLM Model** | [Qwen 2.5 Coder 32B Instruct](https://huggingface.co/Qwen/Qwen2.5-Coder-32B-Instruct) via Hugging Face Inference API |
-| **Database** | PostgreSQL (Primary) / SQLite (Fallback & Offline) with [SQLAlchemy](https://www.sqlalchemy.org/) |
-| **SQL Parser** | [sqlparse](https://github.com/andialbrecht/sqlparse) |
-
----
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome!  
-Feel free to open an issue or submit a Pull Request on [GitHub](https://github.com/akshaykaygude/chat-with-database).
 
 ---
 
 ## 📄 License
 
-This project is open-source and available under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
