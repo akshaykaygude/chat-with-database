@@ -67,7 +67,7 @@ class SQLGenerator:
         """
         q = user_question.strip().lower()
         greetings = ["hi", "hello", "hey", "who are you", "what can you do", "help", "good morning", "good evening"]
-        if q in greetings or len(q.split()) <= 2 and any(g in q for g in greetings):
+        if q in greetings or any(g == q.strip("?!., ") for g in greetings) or (len(q.split()) <= 4 and any(g in q for g in greetings)):
             return True
         
         # Charting advice questions (e.g., 'which columns use for pie chat', 'how to plot bar chart')
